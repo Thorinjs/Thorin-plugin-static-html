@@ -1,0 +1,18 @@
+{
+  "name": "thorin-plugin-static-html",
+  "author": "Stiudeo",
+  "version": "1.0.1",
+  "dependencies": {
+  },
+  "description": "Thorin.js static HTML generator",
+  "main": "index.js",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Thorinjs/Thorin-plugin-static-html"
+  },
+  "homepage": "http://thorinjs.com",
+  "bugs": {
+    "url": "https://github.com/Thorinjs/Thorin-plugin-static-html/issues"
+  }
+}
