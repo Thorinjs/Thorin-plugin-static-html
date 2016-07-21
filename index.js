@@ -15,12 +15,13 @@ module.exports = function(thorin, opt, pluginName) {
   opt = thorin.util.extend({
     logger: pluginName || 'static-html',
     actions: null,        // specific actions to download only. If set, it should be an array of action names.
-    output: path.normalize(thorin.root + '/public/static'), // the output directory for the static HTML pages.
+    output: thorin.root + '/public/static', // the output directory for the static HTML pages.
     transport: 'http',  // the HTTP transport name
     wait: 1000,       // wait 1000 ms before we start
     compile: null // the actual compile function that will do all the HTML downloading.
   }, opt);
   if (typeof opt.compile !== 'function') opt.compile = initCompile(thorin, opt);
+  opt.output = path.normalize(opt.output);
   const logger = thorin.logger(opt.logger);
   const staticObj = {};
 
