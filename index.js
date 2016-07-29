@@ -8,9 +8,13 @@ const path = require('path');
  *
  * Note that this plugin works by performing a GET request to the alias of all registered actions
  * and saving the result HTML into the static folder, using the given alias as the file path.
+ * Note:
+ * the plugin is also an event emitter that will emit the "compile" event once the compilation process
+ * is done.
  *
  */
-const initCompile = require('./lib/compile');
+const initCompile = require('./lib/compile'),
+  initSitemap = require('./lib/sitemap');
 module.exports = function(thorin, opt, pluginName) {
   opt = thorin.util.extend({
     logger: pluginName || 'static-html',
@@ -18,12 +22,24 @@ module.exports = function(thorin, opt, pluginName) {
     output: thorin.root + '/public/static', // the output directory for the static HTML pages.
     transport: 'http',  // the HTTP transport name
     wait: 1000,       // wait 1000 ms before we start
-    compile: null // the actual compile function that will do all the HTML downloading.
+    compile: null, // the actual compile function that will do all the HTML downloading.
+    sitemap: {
+      compile: null,  // the compile function that will be used to generate the sitemap.
+      frequency: 'weekly', // how often does the site change.
+      domain: ''        // the actual domain that we're generating the sitemap for.
+    } // Setting sitemap to false, will not generate the sitemap.
   }, opt);
   if (typeof opt.compile !== 'function') opt.compile = initCompile(thorin, opt);
+  if(typeof opt.sitemap === 'object' && opt.sitemap) {
+    if(typeof opt.sitemap.compile !== 'function') {
+      opt.sitemap.compile = initSitemap(thorin, opt);
+    }
+  } else {
+    opt.sitemap = false;
+  }
   opt.output = path.normalize(opt.output);
   const logger = thorin.logger(opt.logger);
-  const staticObj = {};
+  const staticObj = new thorin.util.Event();
 
   /*
    * Generate the actual HTML files.
@@ -37,6 +53,10 @@ module.exports = function(thorin, opt, pluginName) {
     actions.forEach((actionObj) => {
       calls.push((done) => opt.compile(actionObj, done));
     });
+    // Finally, generate the sitemap
+    if(opt.sitemap) {
+      calls.push((done) => opt.sitemap.compile(actions, done));
+    }
     logger.trace(`Compiling ${actions.length} ` + (actions.length === 1 ? 'action' : 'actions'));
     thorin.util.async.series(calls, (e) => {
       if (e) {
@@ -44,6 +64,7 @@ module.exports = function(thorin, opt, pluginName) {
         logger.debug(e);
         return done && done(e);
       }
+      staticObj.emit('compile');
       done && done();
     });
   };
