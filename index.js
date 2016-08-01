@@ -22,6 +22,7 @@ module.exports = function(thorin, opt, pluginName) {
     output: thorin.root + '/public/static', // the output directory for the static HTML pages.
     transport: 'http',  // the HTTP transport name
     wait: 1000,       // wait 1000 ms before we start
+    autorun: true,
     compile: null, // the actual compile function that will do all the HTML downloading.
     sitemap: {
       compile: null,  // the compile function that will be used to generate the sitemap.
@@ -30,16 +31,58 @@ module.exports = function(thorin, opt, pluginName) {
     } // Setting sitemap to false, will not generate the sitemap.
   }, opt);
   if (typeof opt.compile !== 'function') opt.compile = initCompile(thorin, opt);
-  if(typeof opt.sitemap === 'object' && opt.sitemap) {
-    if(typeof opt.sitemap.compile !== 'function') {
+  if (typeof opt.sitemap === 'object' && opt.sitemap) {
+    if (typeof opt.sitemap.compile !== 'function') {
       opt.sitemap.compile = initSitemap(thorin, opt);
     }
   } else {
     opt.sitemap = false;
   }
   opt.output = path.normalize(opt.output);
-  const logger = thorin.logger(opt.logger);
+  const logger = thorin.logger(opt.logger),
+    async = thorin.util.async;
   const staticObj = new thorin.util.Event();
+
+  /*
+   * Given a list of HTTP paths, it will perform the generate() on them.
+   * Note: when we do this, we essentially simulate the custom actions, by
+   * adding them to the dispatcher.
+   * WARNING: once the generation process is complete, the process MUST
+   * shutdown.
+   * */
+  staticObj.generatePaths = (paths, done) => {
+    let actions = [];
+    paths.forEach((gPath) => {
+      gPath = gPath.replace(/\\/g, '/');
+      if (gPath.charAt(0) !== '/') gPath = '/' + gPath;
+      let actionObj = {
+        name: 'static' + gPath.replace(/\//g, '.'),
+        aliases: [{
+          verb: 'GET',
+          name: gPath
+        }]
+      };
+      actions.push(actionObj);
+    });
+    let calls = [];
+    actions.forEach((actionObj) => {
+      calls.push((done) => opt.compile(actionObj, done));
+    });
+    // generate sitemap if enabled
+    if (opt.sitemap) {
+      calls.push((done) => opt.sitemap.compile(actions, done));
+    }
+    logger.trace(`Compiling ${actions.length} ` + (actions.length === 1 ? 'path' : 'paths'));
+    async.series(calls, (e) => {
+      if (e) {
+        logger.error(`Failed to compile all custom path static files.`);
+        logger.debug(e);
+        return done && done(e);
+      }
+      staticObj.emit('compile');
+      done && done();
+    });
+  };
 
   /*
    * Generate the actual HTML files.
@@ -54,11 +97,11 @@ module.exports = function(thorin, opt, pluginName) {
       calls.push((done) => opt.compile(actionObj, done));
     });
     // Finally, generate the sitemap
-    if(opt.sitemap) {
+    if (opt.sitemap) {
       calls.push((done) => opt.sitemap.compile(actions, done));
     }
     logger.trace(`Compiling ${actions.length} ` + (actions.length === 1 ? 'action' : 'actions'));
-    thorin.util.async.series(calls, (e) => {
+    async.series(calls, (e) => {
       if (e) {
         logger.error(`Failed to compile all static files.`);
         logger.debug(e);
@@ -71,6 +114,7 @@ module.exports = function(thorin, opt, pluginName) {
 
   /* Run the plugin */
   staticObj.run = (done) => {
+    if (opt.autorun === false) return done();
     // Wait for the transport to start up and then do it
     thorin.on(thorin.EVENT.RUN, 'transport.' + opt.transport, () => {
       setTimeout(() => {
