@@ -1,7 +1,7 @@
 {
   "name": "thorin-plugin-static-html",
   "author": "Stiudeo",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "dependencies": {
   },
   "description": "Thorin.js static HTML generator",
