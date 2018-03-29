@@ -1,9 +1,8 @@
 {
   "name": "thorin-plugin-static-html",
-  "author": "Stiudeo",
-  "version": "1.0.6",
-  "dependencies": {
-  },
+  "author": "UNLOQ Systems",
+  "version": "1.0.7",
+  "dependencies": {},
   "description": "Thorin.js static HTML generator",
   "main": "index.js",
   "license": "MIT",
