@@ -1,8 +1,10 @@
 {
   "name": "thorin-plugin-static-html",
   "author": "UNLOQ Systems",
-  "version": "1.0.7",
-  "dependencies": {},
+  "version": "1.0.8",
+  "dependencies": {
+    "html-minifier": "3.5.12"
+  },
   "description": "Thorin.js static HTML generator",
   "main": "index.js",
   "license": "MIT",

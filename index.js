@@ -24,6 +24,17 @@ module.exports = function(thorin, opt, pluginName) {
     wait: 1000,       // wait 1000 ms before we start
     autorun: true,
     compile: null, // the actual compile function that will do all the HTML downloading.
+    extension: '.html', // The extension of the files (leave blank for none)
+    minify: false,  // Set to true to minify the html using html-minifier
+    minifyOptions: {   // Default minify options
+      minifyCSS: true,
+      minifyJS: true,
+      conservativeCollapse: true,
+      keepClosingSlash: true,
+      collapseWhitespace: true,
+      removeComments: true,
+      removeTagWhitespace: true
+    },
     sitemap: {
       compile: null,  // the compile function that will be used to generate the sitemap.
       frequency: 'weekly', // how often does the site change.
