@@ -33,7 +33,7 @@ module.exports = function(thorin, opt, pluginName) {
       keepClosingSlash: true,
       collapseWhitespace: true,
       removeComments: true,
-      removeTagWhitespace: true
+      removeTagWhitespace: false
     },
     sitemap: {
       compile: null,  // the compile function that will be used to generate the sitemap.
